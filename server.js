@@ -16,7 +16,7 @@ connectDB();
 
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || '*',
+    origin: "https://nur-managment-frontend.vercel.app" || 'https://nur-managment-frontend.vercel.app/',
   })
 );
 app.use(express.json());
