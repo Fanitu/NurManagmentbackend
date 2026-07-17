@@ -9,14 +9,16 @@ const orderRoutes = require('./routes/orderRoutes');
 const orderListRoutes = require('./routes/orderListRoutes');
 const runningCostRoutes = require('./routes/runningCostRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const monthlyExpenseRoutes = require('./routes/monthlyExpenseRoutes');
 
 const app = express();
 
 connectDB();
+console.log("Debug for the process env file :",process.env.CORS_ORIGIN);  
 
 app.use(
   cors({
-    origin: "https://nur-managment-frontend.vercel.app" || 'https://nur-managment-frontend.vercel.app/',
+    origin: process.env.CORS_ORIGIN,
   })
 );
 app.use(express.json());
@@ -29,6 +31,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/orderlist', orderListRoutes);
 app.use('/api/running-cost', runningCostRoutes);
+app.use('/api/monthly-expenses', monthlyExpenseRoutes);
 app.use('/api/admin', adminRoutes);
 
 // 404 handler
