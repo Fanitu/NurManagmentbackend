@@ -478,9 +478,9 @@ const getMonthlyDetail = async (req, res) => {
     // Group running costs by name+price → { name, price, count, total }
     const costMap = {};
     runningCosts.forEach((c) => {
-      const key = `${c.name}||${c.price}`;
+      const key = c.name.toLowerCase().trim();
       if (!costMap[key]) {
-        costMap[key] = { name: c.name, price: c.price, count: 0, total: 0 };
+        costMap[key] = { name: c.name, count: 0, total: 0 };
       }
       costMap[key].count += 1;
       costMap[key].total += c.price;
