@@ -50,7 +50,7 @@ app.use(
       
       const allowedOrigins = [
         'https://nur-managment-frontend-8u92.vercel.app',
-        'https://oms-monitoring-one.vercel.app/',
+        'https://oms-monitoring-nine.vercel.app',
         'https://omsmonitoringbackend.onrender.com/',
         // Add your production domains here
       ];
