@@ -11,6 +11,7 @@ const createRunningCost = async (req, res) => {
     }
 
     const cost = await RunningCost.create({
+      restaurantId: req.restaurantId,
       name: name.trim(),
       price: Number(price),
       createdBy: req.user ? req.user._id : undefined,
@@ -26,7 +27,7 @@ const createRunningCost = async (req, res) => {
 // @route   GET /api/running-cost
 const getAllRunningCosts = async (req, res) => {
   try {
-    const costs = await RunningCost.find().sort({ createdAt: -1 });
+    const costs = await RunningCost.find({restaurantId: req.restaurantId}).sort({ createdAt: -1 });
     res.status(200).json(costs);
   } catch (err) {
     console.error('Get running costs error:', err);

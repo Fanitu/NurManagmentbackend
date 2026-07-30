@@ -22,6 +22,7 @@ const createMonthlyExpense = async (req, res) => {
     }
 
     const expense = await MonthlyExpense.create({
+      restaurantId: req.restaurantId,
       name: name.trim(),
       amount: Number(amount),
       startDate: todayEthiopianMidnightUTC(),
@@ -42,7 +43,7 @@ const createMonthlyExpense = async (req, res) => {
 // (the one with endDate: null), for the list UI.
 const getAllMonthlyExpenses = async (req, res) => {
   try {
-    const expenses = await MonthlyExpense.find({ endDate: null }).sort({ createdAt: -1 });
+    const expenses = await MonthlyExpense.find({ restaurantId: req.restaurantId, endDate: null }).sort({ createdAt: -1 });
     res.status(200).json(expenses);
   } catch (err) {
     console.error('Get monthly expenses error:', err);
@@ -56,7 +57,7 @@ const getAllMonthlyExpenses = async (req, res) => {
 const updateMonthlyExpense = async (req, res) => {
   try {
     const { name, amount } = req.body;
-    const current = await MonthlyExpense.findById(req.params.id);
+    const current = await MonthlyExpense.findOne({ _id: req.params.id, restaurantId: req.restaurantId });
     if (!current) {
       return res.status(404).json({ message: 'Monthly expense not found' });
     }
@@ -75,6 +76,7 @@ const updateMonthlyExpense = async (req, res) => {
 
     // Open a new record for the same expense group
     const updated = await MonthlyExpense.create({
+      restaurantId: req.restaurantId,
       name: (name ?? current.name).trim(),
       amount: amount !== undefined ? Number(amount) : current.amount,
       startDate: today,
@@ -94,7 +96,7 @@ const updateMonthlyExpense = async (req, res) => {
 // "Delete" = set endDate to today. Past months keep it, future months won't.
 const deleteMonthlyExpense = async (req, res) => {
   try {
-    const expense = await MonthlyExpense.findById(req.params.id);
+    const expense = await MonthlyExpense.findOne({ _id: req.params.id, restaurantId: req.restaurantId });
     if (!expense) {
       return res.status(404).json({ message: 'Monthly expense not found' });
     }

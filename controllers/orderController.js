@@ -19,7 +19,7 @@ const createOrder = async (req, res) => {
     let type = '';
 
     if (orderListId) {
-      const catalogItem = await OrderList.findById(orderListId);
+      const catalogItem = await OrderList.findOne({ _id: orderListId, restaurantId: req.restaurantId });
       if (catalogItem) {
         makingPrice = catalogItem.makingPrice;
         type = catalogItem.type;
@@ -27,6 +27,7 @@ const createOrder = async (req, res) => {
     }
 
     const order = await Order.create({
+      restaurantId:req.restaurantId,
       name,
       type,
       sellingPrice: Number(sellingPrice),
@@ -47,7 +48,9 @@ const getTodaysOrders = async (req, res) => {
   try {
     const now = new Date();
     const orders = await Order.find({
+      restaurantId: req.restaurantId,
       createdAt: { $gte: startOfDay(now), $lte: endOfDay(now) },
+      isDeleted: false, // Exclude soft-deleted orders
     }).sort({ createdAt: -1 });
 
     res.status(200).json(orders);
@@ -61,7 +64,7 @@ const getTodaysOrders = async (req, res) => {
 // @desc    Get all orders (used by admin Orders List view), newest first
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const orders = await Order.find({ restaurantId: req.restaurantId }).sort({ createdAt: -1 });
     res.status(200).json(orders);
   } catch (err) {
     console.error('Get all orders error:', err);
@@ -75,13 +78,13 @@ const updateOrder = async (req, res) => {
   try {
     const { name, sellingPrice, makingPrice, orderListId } = req.body;
 
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findOne({ _id: req.params.id, restaurantId: req.restaurantId });
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
     if (orderListId) {
-      const catalogItem = await OrderList.findById(orderListId);
+      const catalogItem = await OrderList.findOne({ _id: orderListId, restaurantId: req.restaurantId });
       if (catalogItem) {
         order.makingPrice = catalogItem.makingPrice;
         order.type = catalogItem.type;
@@ -104,11 +107,29 @@ const updateOrder = async (req, res) => {
 // @route   DELETE /api/orders/:id
 const deleteOrder = async (req, res) => {
   try {
-    const order = await Order.findByIdAndDelete(req.params.id);
+    const { reason } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({
+        message: 'ምክንያት ሳይሰጡ ትዕዛዝ መሰረዝ አይቻልም',
+      });
+    }
+
+    const order = await Order.findOne({ _id: req.params.id, restaurantId: req.restaurantId });
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    res.status(200).json({ message: 'Order deleted', id: req.params.id });
+    if (order.isDeleted) {
+      return res.status(400).json({ message: 'Order already deleted' });
+    }
+
+    order.isDeleted     = true;
+    order.deletedReason = reason.trim();
+    order.deletedAt     = new Date();
+    order.deletedBy     = req.user ? req.user._id : null;
+    await order.save();
+
+    res.status(200).json({ message: 'Order deleted', id: order._id });
   } catch (err) {
     console.error('Delete order error:', err);
     res.status(500).json({ message: 'Failed to delete order' });

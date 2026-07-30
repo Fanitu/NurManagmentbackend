@@ -5,7 +5,7 @@ const OrderList = require('../models/OrderList');
 //          grouped by type on the frontend)
 const getOrderList = async (req, res) => {
   try {
-    const items = await OrderList.find().sort({ type: 1, name: 1 });
+    const items = await OrderList.find({ restaurantId: req.restaurantId }).sort({ type: 1, name: 1 });
     res.status(200).json(items);
   } catch (err) {
     console.error('Get order list error:', err);
@@ -24,6 +24,7 @@ const createOrderListItem = async (req, res) => {
     }
 
     const item = await OrderList.create({
+      restaurantId: req.restaurantId,
       type: type.trim(),
       name: name.trim(),
       sellingPrice: Number(sellingPrice),
@@ -42,7 +43,7 @@ const updateOrderListItem = async (req, res) => {
   try {
     const { type, name, sellingPrice} = req.body;
 
-    const item = await OrderList.findById(req.params.id);
+    const item = await OrderList.findOne({ _id: req.params.id, restaurantId: req.restaurantId });
     if (!item) {
       return res.status(404).json({ message: 'Order list item not found' });
     }
@@ -63,7 +64,7 @@ const updateOrderListItem = async (req, res) => {
 // @desc    Admin deletes an order list item
 const deleteOrderListItem = async (req, res) => {
   try {
-    const item = await OrderList.findByIdAndDelete(req.params.id);
+    const item = await OrderList.findByIdAndDelete({ _id: req.params.id, restaurantId: req.restaurantId });
     if (!item) {
       return res.status(404).json({ message: 'Order list item not found' });
     }

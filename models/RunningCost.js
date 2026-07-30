@@ -2,24 +2,19 @@ const mongoose = require('mongoose');
 
 const runningCostSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
+    restaurantId: {
+      type:      String,
+      required:  true,
+      uppercase: true,
+      trim:      true,
     },
-    price: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
+    name:      { type: String, required: true, trim: true },
+    price:     { type: Number, required: true, min: 0 },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );
 
-runningCostSchema.index({ createdAt: -1 });
+runningCostSchema.index({ restaurantId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('RunningCost', runningCostSchema);
