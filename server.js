@@ -49,9 +49,9 @@ app.use(
       if (!origin) return callback(null, true);
       
       const allowedOrigins = [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:3000',
+        'https://nur-managment-frontend-8u92.vercel.app',
+        'https://oms-monitoring-one.vercel.app/',
+        'https://omsmonitoringbackend.onrender.com/',
         // Add your production domains here
       ];
       
