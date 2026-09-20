@@ -1,121 +1,290 @@
-# OMS Security Update
+🍽️ Restaurant Management System — Backend
 
-## Install new packages first
+A RESTful backend for a restaurant management system, built with Node.js, Express.js, MongoDB, and Mongoose.
 
-```bash
-cd oms/backend
-npm install helmet express-rate-limit express-mongo-sanitize express-validator xss-clean hpp
-```
+The backend provides authenticated APIs for managing restaurant orders, order-list/menu data, running costs, monthly expenses, administrative operations, and user access.
 
-## Files to update/create
+🚀 Overview
 
-| File | Action |
-|---|---|
-| `middleware/security.js` | CREATE — new file |
-| `middleware/validate.js` | CREATE — new file |
-| `middleware/auth.js` | REPLACE existing file |
-| `server.js` | REPLACE existing file |
-| `routes/authRoutes.js` | REPLACE (add loginLimiter + validateLogin) |
-| `routes/orderRoutes.js` | REPLACE (add orderLimiter + validators) |
-| `routes/orderListRoutes.js` | REPLACE (add validators) |
-| `routes/runningCostRoutes.js` | REPLACE (add validator) |
-| `routes/adminRoutes.js` | REPLACE (add validators) |
-| `routes/monthlyExpenseRoutes.js` | REPLACE (add validators) |
-| `.env` | ADD NODE_ENV and CLIENT_ORIGIN |
+This project is the backend/API layer of a full-stack Restaurant Management System.
 
-## What each layer does
+It is designed around a modular Express architecture with separate:
 
-### Helmet
-Sets 11 HTTP security headers on every response.
-Stops clickjacking, MIME sniffing, and cross-origin attacks before
-your code even runs.
+- Routes
+- Controllers
+- Models
+- Middleware
+- Configuration
+- Utility functions
 
-### Rate Limiting
-- Login endpoint: 10 attempts per 15 min per IP
-  (skipSuccessfulRequests: true — only failed logins count)
-- Order submission: 60 per minute per IP
-- Everything else: 200 per minute per IP
+The API uses JWT-based authentication and role-based authorization to protect restaurant management operations.
 
-### MongoDB Sanitization
-Strips $ and . from all request bodies/params/queries.
-Prevents: { "password": { "$gt": "" } } login bypass attacks.
+✨ Core Capabilities
 
-### XSS Sanitization
-Strips HTML tags and JavaScript from all string inputs.
-Prevents: <script>alert('xss')</script> being saved to DB
-and executed when admin views data.
+🔐 Authentication & Authorization
 
-### HTTP Parameter Pollution (HPP)
-Prevents: ?sort=name&sort=malicious duplicate parameter abuse.
-Takes the last value for duplicates — safe, predictable behavior.
+- JWT-based authentication
+- Protected API routes
+- Role-based authorization
+- Admin-only operations where required
+- Password hashing with "bcryptjs"
+- User existence verification during authentication
+- Token expiry and signature verification
 
-### Request Size Limit (10kb)
-express.json({ limit: '10kb' }) in server.js.
-Prevents large payload bombs from exhausting server memory.
+📦 Order Management
 
-### Input Validation (express-validator)
-Every route that accepts body data now validates:
-- Required fields are present
-- Strings are within length limits
-- Numbers are in valid ranges
-- MongoDB IDs are valid ObjectIds
-- Date params match YYYY-MM-DD format
-- Ethiopian/Amharic characters accepted in name fields
+The API supports the restaurant order workflow, including:
 
-### Hardened Auth Middleware
-1. Token signature verified (was already done)
-2. Token expiry checked (was already done)
-3. User confirmed to still exist in DB (NEW)
-   — deleted workers can't use old tokens
-4. Role check is case-insensitive (NEW defensive measure)
-5. Error messages never reveal user existence (NEW)
+- Creating orders
+- Retrieving today's orders
+- Retrieving all orders for authorized administrators
+- Updating orders
+- Deleting orders
+- Request validation
+- Order-specific rate limiting
 
-### CORS Hardening
-Removed the || '*' fallback — origin is now required via CLIENT_ORIGIN env var.
-In production, only requests from your exact frontend domain are accepted.
+The order routes use authentication middleware and validation before reaching the controllers.
 
-### Production Error Responses
-In production (NODE_ENV=production), errors return generic messages only.
-Stack traces go to server logs and your monitor — never to the client.
+📋 Order List Management
 
-## Testing the security locally
+The backend provides protected operations for managing order-list data:
 
-After installing and wiring everything:
+- Retrieve order-list items
+- Create items
+- Update items
+- Delete items
+- Admin-only modification of order-list data
+- Input validation
 
-**Test rate limiting (login):**
-```bash
-for i in {1..12}; do
-  curl -s -X POST http://localhost:5000/api/auth/login \
-    -H "Content-Type: application/json" \
-    -d '{"name":"test","password":"wrong"}' | jq .message
-done
-# After 10 attempts: "Too many login attempts. Please wait 15 minutes and try again."
-```
+💰 Running Cost Management
 
-**Test MongoDB injection:**
-```bash
+The API supports:
+
+- Creating running-cost records
+- Retrieving running costs
+- Protected access
+- Input validation
+- Admin authorization for retrieving all running costs
+
+📊 Expense & Administrative Operations
+
+The backend includes dedicated route modules for administrative and monthly-expense functionality, keeping these responsibilities separated from the order APIs.
+
+🏗️ Backend Architecture
+
+NurManagmentbackend/
+│
+├── config/
+│   └── Database / application configuration
+│
+├── controllers/
+│   └── Business logic
+│
+├── middleware/
+│   ├── auth.js
+│   ├── security.js
+│   └── validate.js
+│
+├── models/
+│   └── Mongoose data models
+│
+├── routes/
+│   ├── authRoutes.js
+│   ├── orderRoutes.js
+│   ├── orderListRoutes.js
+│   ├── runningCostRoutes.js
+│   ├── monthlyExpenseRoutes.js
+│   └── adminRoutes.js
+│
+├── utils/
+│   └── Utility functions
+│
+├── seedAdmin.js
+├── server.js
+├── package.json
+└── README.md
+
+The repository currently follows this separated route/controller/model/middleware structure.
+
+🛠️ Technology Stack
+
+Backend
+
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT
+- bcryptjs
+- dotenv
+
+Security
+
+- Helmet
+- express-rate-limit
+- express-mongo-sanitize
+- express-validator
+- xss-clean
+- hpp
+- CORS
+
+Development
+
+- Nodemon
+
+These dependencies are currently defined in the project's "package.json".
+
+🛡️ Security & Production Hardening
+
+Security was treated as a dedicated layer of the application rather than relying only on authentication.
+
+Helmet
+
+Adds security-related HTTP headers to responses to help protect against common browser-based attacks.
+
+Rate Limiting
+
+Different limits are applied to different operations:
+
+- Login: 10 failed attempts per 15 minutes per IP
+- Order submission: 60 requests per minute per IP
+- General requests: 200 requests per minute per IP
+
+MongoDB Injection Protection
+
+Request data is sanitized to prevent malicious MongoDB operators such as "$gt" from being injected into authentication or database queries.
+
+XSS Protection
+
+String inputs are sanitized to reduce the risk of storing executable HTML or JavaScript in application data.
+
+HTTP Parameter Pollution Protection
+
+Duplicate query parameters are handled consistently to prevent parameter-pollution abuse.
+
+Request Size Limiting
+
+JSON request bodies are limited to 10 KB to reduce the risk of unnecessarily large payloads consuming server resources.
+
+Input Validation
+
+The application validates incoming data including:
+
+- Required fields
+- String lengths
+- Numeric ranges
+- MongoDB ObjectIds
+- Date formats
+- Supported Ethiopian/Amharic characters in applicable name fields
+
+Hardened Authentication
+
+Authentication includes:
+
+1. JWT signature verification
+2. Token expiry checking
+3. Database verification that the user still exists
+4. Case-insensitive role checking
+5. Generic authentication errors that avoid exposing user existence
+
+CORS Hardening
+
+The backend uses an explicitly configured client origin instead of falling back to a wildcard origin.
+
+Production Error Handling
+
+In production, clients receive generic error responses while detailed stack traces remain on the server side.
+
+🧪 Security Testing
+
+The project includes manual security tests for:
+
+- Login rate limiting
+- MongoDB injection attempts
+- XSS payload sanitization
+- Oversized request payloads
+
+Example:
+
 curl -s -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"name":"admin","password":{"$gt":""}}' | jq .
-# Should return validation error, not a successful login
-```
+  -d '{"name":"admin","password":{"$gt":""}}'
 
-**Test XSS:**
-```bash
-curl -s -X POST http://localhost:5000/api/running-cost \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"name":"<script>alert(1)</script>","price":100}' | jq .name
-# Should return sanitized string, script tags stripped
-```
+The expected behavior is validation/rejection rather than successful authentication.
 
-**Test request size limit:**
-```bash
-# Generate a 20kb payload and send it
-python3 -c "import json; print(json.dumps({'name': 'x'*20000, 'price': 1}))" | \
-  curl -s -X POST http://localhost:5000/api/running-cost \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer YOUR_TOKEN" \
-    -d @- | jq .
-# Should return 413 Payload Too Large
-```
+⚙️ Getting Started
+
+1. Clone the repository
+
+git clone https://github.com/Fanitu/NurManagmentbackend.git
+cd NurManagmentbackend
+
+2. Install dependencies
+
+npm install
+
+3. Configure environment variables
+
+Create a ".env" file locally.
+
+Do not commit production secrets.
+
+Typical configuration includes:
+
+NODE_ENV=development
+CLIENT_ORIGIN=http://localhost:5173
+
+Add the database and authentication configuration required by the application.
+
+4. Start development server
+
+npm run dev
+
+5. Start production server
+
+npm start
+
+The available "dev" and "start" scripts are defined in "package.json".
+
+🔗 Related Frontend
+
+Frontend repository:
+
+https://github.com/Fanitu/NurManagmentFrontend
+
+Live frontend:
+
+https://nur-managment-frontend.vercel.app/
+
+The frontend repository is a React/Vite application and is deployed through Vercel.
+
+💡 Engineering Highlights
+
+This project demonstrates practical backend engineering including:
+
+- REST API design
+- MVC-style separation of responsibilities
+- JWT authentication
+- Role-based authorization
+- MongoDB/Mongoose data management
+- Input validation
+- API security hardening
+- Rate limiting
+- CORS configuration
+- Error handling
+- Environment-based configuration
+- Modular route/controller organization
+
+📌 Project Status
+
+This backend is part of a full-stack Restaurant Management System.
+
+For portfolio purposes, the repository demonstrates the backend architecture and security practices used to build a production-oriented business application.
+
+👨‍💻 Author
+
+Fanuel Bahta
+
+Full-Stack Web Developer
+
+GitHub: https://github.com/Fanitu
